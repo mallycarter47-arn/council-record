@@ -3,15 +3,24 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"check:types": "tsc --noEmit"
+		"check:types": "tsc --noEmit",
+		"dev": "vite dev",
+		"build": "vite build",
+		"start": "node --env-file=.env dist/server.mjs",
+		"register-commands": "node scripts/register-commands.ts"
 	},
 	"dependencies": {
+		"@discordjs/rest": "^2.6.3",
+		"@flue/discord": "^2.1.0",
 		"@flue/runtime": "^2.1.0",
+		"hono": "^4.12.32",
 		"valibot": "^1.5.0"
 	},
 	"devDependencies": {
 		"@flue/cli": "^2.1.0",
+		"@flue/vite": "^2.1.0",
 		"@types/node": "^22.10.10",
-		"typescript": "^7.0.2"
+		"typescript": "^7.0.2",
+		"vite": "^8.3.0"
 	}
 }
