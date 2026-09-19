@@ -1,0 +1,10 @@
+data/raw/
+db/*.db
+db/*.db-wal
+db/*.db-shm
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.next/
+.env*
