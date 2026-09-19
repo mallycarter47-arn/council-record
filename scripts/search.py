@@ -36,6 +36,34 @@ FTS_SPECIAL = re.compile(r'[^\w\s"*]')
 
 FTS_OPERATORS = {"AND", "OR", "NOT", "NEAR"}
 
+# Words people type as one token that the record splits in two (or the other
+# way round). The tokenizer turns "Shut-offs" into "shut" + "off", so a search
+# for "shutoff" alone finds nothing. Each typed word is ORed with its variants.
+# Keys are lowercase; a trailing "s" on the typed word is ignored.
+VARIANTS = {
+    "shutoff": ['"shut off"'],
+    "shutdown": ['"shut down"'],
+    "landbank": ['"land bank"'],
+    "shotspotter": ['"shot spotter"'],
+    "stormwater": ['"storm water"'],
+    "streetlight": ['"street light"'],
+    "citywide": ['"city wide"'],
+    "cleanup": ['"clean up"'],
+    "setback": ['"set back"'],
+}
+# Reverse direction: "shut off" typed as two words should also find "shutoff".
+PHRASE_VARIANTS = {
+    tuple(v.strip('"').split()): k
+    for k, vs in VARIANTS.items() for v in vs if v.startswith('"')
+}
+
+
+def expand(tok):
+    alts = VARIANTS.get(tok.lower()) or VARIANTS.get(tok.lower().rstrip("s"))
+    if not alts:
+        return tok
+    return "(" + " OR ".join([tok] + alts) + ")"
+
 
 def clean_query(raw):
     """FTS5 throws on stray punctuation. Strip it, keep quotes for phrases and
@@ -53,7 +81,10 @@ def clean_query(raw):
 
     tokens = [t for t in q.split() if t]
     parts = []
-    for tok in tokens:
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        i += 1
         if tok in FTS_OPERATORS:
             # An operator needs a term on both sides.
             if parts and parts[-1] not in FTS_OPERATORS:
@@ -61,7 +92,12 @@ def clean_query(raw):
             continue
         if parts and parts[-1] not in FTS_OPERATORS:
             parts.append("AND")
-        parts.append(tok)
+        pair = tuple(t.lower() for t in tokens[i - 1:i + 1])
+        if len(pair) == 2 and pair in PHRASE_VARIANTS:
+            parts.append(f'("{tokens[i - 1]} {tokens[i]}" OR {PHRASE_VARIANTS[pair]})')
+            i += 1
+            continue
+        parts.append(expand(tok))
 
     while parts and parts[-1] in FTS_OPERATORS:
         parts.pop()
