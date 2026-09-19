@@ -1,0 +1,17 @@
+{
+	"name": "agent",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check:types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@flue/runtime": "^2.1.0",
+		"valibot": "^1.5.0"
+	},
+	"devDependencies": {
+		"@flue/cli": "^2.1.0",
+		"@types/node": "^22.10.10",
+		"typescript": "^7.0.2"
+	}
+}
