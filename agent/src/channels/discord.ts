@@ -79,9 +79,15 @@ export const channel = createDiscordChannel({
 	},
 });
 
+// A bare legistar/eSCRIBE URL wraps over two lines in Discord and buries the
+// date and outcome that matter. Render each as a short labelled link instead.
+function tidyLinks(text: string): string {
+	return text.replace(/(?<![(<[])\bhttps?:\/\/[^\s<>()[\]]+/g, '[official record](<$&>)');
+}
+
 function chunks(text: string): string[] {
 	const out: string[] = [];
-	let rest = text.trim();
+	let rest = tidyLinks(text.trim());
 	while (rest.length > MAX_MESSAGE) {
 		let cut = rest.lastIndexOf('\n', MAX_MESSAGE);
 		if (cut < MAX_MESSAGE / 2) cut = rest.lastIndexOf(' ', MAX_MESSAGE);
