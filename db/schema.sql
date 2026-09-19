@@ -133,6 +133,14 @@ CREATE TABLE IF NOT EXISTS ingest_progress (
     fetched_at   TEXT NOT NULL
 );
 
+-- eSCRIBE (2022-present) identifies meetings by GUID. Map each to an integer
+-- event_id >= 1,000,000 so it shares the events / agenda_items tables with
+-- Legistar without colliding. See scripts/ingest_escribe.py.
+CREATE TABLE IF NOT EXISTS escribe_meetings (
+    guid         TEXT PRIMARY KEY,
+    event_id     INTEGER NOT NULL UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS ingest_log (
     id           INTEGER PRIMARY KEY,
     source       TEXT NOT NULL,
