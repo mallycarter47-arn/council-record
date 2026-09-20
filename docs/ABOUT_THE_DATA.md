@@ -17,12 +17,13 @@ the last decade. No single one covers the whole period.
 | Years | Official source | What it contains | In this tool? |
 |---|---|---|---|
 | May 2013 – Mar 2017 | **Legistar** (`detroit.legistar.com`) | Meetings and agenda items. The city never filled in outcomes here, so these results have no "action taken". | Yes: 457 meetings, 19,547 items |
-| 2017 – 2021 | **Journals of Proceedings**, annual PDFs from the City Clerk | The full printed record of each session, including recorded votes | Partly: 2018 and 2020 are in (9,614 items). 2017 Pt1–3, 2019 and 2021 are not yet. |
+| 2017 – 2021 | **Journals of Proceedings**, annual PDFs from the City Clerk | The full printed record of each session, including recorded votes | Yes, except 2021: 21,696 items from 2017, 2018, 2019 and 2020 |
 | 2022 – present | **eSCRIBE** (`pub-detroitmi.escribemeetings.com`) | Meetings, agenda items, and, where the Clerk has posted minutes, the outcome of each item ("Approved 9-0") | Yes: 1,207 meetings, 48,124 items (Jan 2022 – Sep 2026) |
 
-**In total:** 77,285 agenda items from 1,743 meetings, May 2013 – September
-2026. About 80% of the 2022-onward items have a recorded outcome, and the
-journal years add 4,494 more, many with the roll-call vote attached.
+**In total:** 89,367 agenda items, May 2013 – September 2026, with every year
+covered except 2021. About 80% of the 2022-onward items have a recorded
+outcome, and the journal years add thousands more, many with the roll-call
+vote attached.
 
 **How the data is collected:**
 - **Legistar** has a public API. We call it at four requests a second, which
@@ -42,13 +43,12 @@ journal years add 4,494 more, many with the roll-call vote attached.
   Journals of Proceedings: one PDF per year, each about 2,300–2,800 pages
   ([Journals of City Council](https://detroitmi.gov/government/city-clerk/journals-city-council)).
   They are real text, not scans, and they include the roll-call votes.
-- **2018 and 2020 are now searchable** — 9,614 items read straight out of
-  those PDFs, with the outcome taken from the clerk's own wording ("Adopted
+- **2017 through 2020 are now searchable** — 21,696 items read straight out
+  of those PDFs, with the outcome taken from the clerk's own wording ("Adopted
   as follows: Yeas — … 8"). Each result links to the exact page of the
   official PDF.
-- **2017 (April on), 2019 and 2021 are still missing.** The city's site began
-  blocking automated downloads partway through this work; those files have to
-  be fetched by hand before they can be indexed.
+- **Only 2021 is still missing.** The Clerk posts that year through Adobe's
+  document viewer rather than as a direct PDF, so it hasn't been indexed yet.
 - **What you'll see:** the timeline hatches only the years the index truly has
   nothing for, and labels them. A hatched year means the record is missing
   from this tool, not that council did nothing.
@@ -109,7 +109,7 @@ journal years add 4,494 more, many with the roll-call vote attached.
 
 ## Known limitations
 
-- **2017 (April on), 2019 and 2021 are missing** (see "The gap" above).
+- **2021 is missing** (see "The gap" above). Every other year from 2013 on is covered.
 - **No outcomes for 2013–2017.** Legistar has no outcome data, so results
   from those years show no action taken.
 - **Not every 2022-onward item has an outcome.** An item shows one only
