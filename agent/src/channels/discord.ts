@@ -82,7 +82,11 @@ export const channel = createDiscordChannel({
 // A bare legistar/eSCRIBE URL wraps over two lines in Discord and buries the
 // date and outcome that matter. Render each as a short labelled link instead.
 function tidyLinks(text: string): string {
-	return text.replace(/(?<![(<[])\bhttps?:\/\/[^\s<>()[\]]+/g, '[official record](<$&>)');
+	// Unwrap <https://...> first — the model often writes that form, and a bare
+	// legistar/eSCRIBE URL still wraps over two lines even with previews off.
+	return text
+		.replace(/<(https?:\/\/[^>\s]+)>/g, '$1')
+		.replace(/(?<![(<[])\bhttps?:\/\/[^\s<>()[\]]+/g, '[official record](<$&>)');
 }
 
 function chunks(text: string): string[] {

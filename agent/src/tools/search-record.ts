@@ -4,6 +4,7 @@
 
 import { execFile } from 'node:child_process';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { defineTool } from '@flue/runtime';
 import * as v from 'valibot';
 
@@ -31,6 +32,36 @@ export function runSearch(args: string[], signal?: AbortSignal): Promise<unknown
 			},
 		);
 	});
+}
+
+/**
+ * Years the index holds nothing for. Read from the database rather than
+ * hardcoded: the gap shrinks as the Clerk's Journals are parsed, and an agent
+ * that claims a year is missing after we indexed it is worse than one that
+ * says nothing.
+ */
+export function yearsNotIndexed(): number[] {
+	try {
+		const db = new DatabaseSync(path.join(ROOT, 'db', 'council_record.db'), {
+			readOnly: true,
+		});
+		try {
+			const rows = db
+				.prepare('SELECT DISTINCT event_year AS y FROM agenda_items ORDER BY 1')
+				.all() as { y: number }[];
+			if (!rows.length) return [];
+			const have = new Set(rows.map((r) => r.y));
+			const missing: number[] = [];
+			for (let y = rows[0].y; y <= rows[rows.length - 1].y; y++) {
+				if (!have.has(y)) missing.push(y);
+			}
+			return missing;
+		} finally {
+			db.close();
+		}
+	} catch {
+		return [];
+	}
 }
 
 type Result = {
@@ -87,7 +118,7 @@ export const recordTimeline = defineTool({
 	name: 'record_timeline',
 	description:
 		'Count matching agenda items per year for a keyword query, to show how often council returned to a topic. ' +
-		'No data exists for April 2017 – 2021: missing years there mean missing records, not zero activity.',
+		'Some years are not in the index at all; the result lists them. A year listed there is a missing record, not zero activity.',
 	input: v.object({ query: v.pipe(v.string(), v.minLength(1)) }),
 	async run({ data, signal }) {
 		const rows = (await runSearch([data.query, '--timeline', '--json'], signal)) as {
@@ -98,7 +129,7 @@ export const recordTimeline = defineTool({
 			output: {
 				total: rows.reduce((a, r) => a + r.count, 0),
 				by_year: rows,
-				not_indexed: 'April 2017 through 2021',
+				years_not_indexed: yearsNotIndexed(),
 			},
 		};
 	},
