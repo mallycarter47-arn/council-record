@@ -297,3 +297,31 @@ button, input, select { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .yr .b { transition: none; }
 }
+
+/* ---- take it to council --------------------------------------------- */
+.cta {
+  margin: 22px 0 6px;
+  border: 1.5px solid var(--civic);
+  border-left-width: 6px;
+  border-radius: 6px;
+  background: var(--sheet);
+  padding: 14px 18px;
+}
+.cta-head {
+  font: 700 19px/1.15 var(--display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.cta-rows { display: flex; flex-wrap: wrap; gap: 6px 28px; margin-top: 8px; align-items: baseline; }
+.cta-next { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 16px; }
+.cta-label {
+  font: 600 13px/1.4 var(--display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cta-next strong { font-family: var(--display); font-size: 19px; letter-spacing: 0.02em; }
+.cta-loc { color: var(--muted); font-size: 14px; }
+.cta-links { margin: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font: 14px/1.4 var(--mono); }
+.foot a.ask { color: var(--muted); text-decoration: underline; }
+.foot a.ask:hover { color: var(--civic); }

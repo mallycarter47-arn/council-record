@@ -141,6 +141,27 @@ CREATE TABLE IF NOT EXISTS escribe_meetings (
     event_id     INTEGER NOT NULL UNIQUE
 );
 
+-- The Clerk's Journals of Proceedings (2017-2021) are PDFs, one per year, with
+-- no ids of their own. One session per date per file; event_id >= 2,000,000.
+-- See scripts/ingest_journals.py.
+CREATE TABLE IF NOT EXISTS journal_sessions (
+    source       TEXT NOT NULL,
+    session_date TEXT NOT NULL,
+    event_id     INTEGER NOT NULL UNIQUE,
+    PRIMARY KEY (source, session_date)
+);
+
+-- Upcoming meetings, cached from eSCRIBE so the UI can show the next session
+-- with the network off. Refresh with scripts/fetch_upcoming.py.
+CREATE TABLE IF NOT EXISTS upcoming_meetings (
+    guid         TEXT PRIMARY KEY,
+    body_name    TEXT NOT NULL,
+    starts_at    TEXT NOT NULL,      -- ISO datetime, local time
+    location     TEXT,
+    url          TEXT,
+    fetched_at   TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS ingest_log (
     id           INTEGER PRIMARY KEY,
     source       TEXT NOT NULL,

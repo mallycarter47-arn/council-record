@@ -5,8 +5,6 @@ import type { Facets, Result, SearchResponse, YearCount } from "@/lib/record";
 
 const PRESETS = ["water shutoff", "ShotSpotter", "Land Bank"];
 const FIRST_YEAR = 2013;
-// April 2017 – 2021 is in neither Legistar nor eSCRIBE. See docs/ABOUT_THE_DATA.md.
-const GAP = [2018, 2019, 2020, 2021];
 
 type Form = { q: string; body: string; since: string; until: string; action: string };
 const EMPTY: Form = { q: "", body: "", since: "", until: "", action: "" };
@@ -18,6 +16,22 @@ function stampClass(action: string | null) {
   if (/fail|deni|reject|withdr/.test(a)) return "fail";
   if (/postpon|brought back|tabl|held|sent back/.test(a)) return "hold";
   return "refer";
+}
+
+function mailto(r: Result) {
+  const subject = `Council item from ${r.date}: ${r.title.slice(0, 80)}`;
+  const body = [
+    "I'm writing about an item in the council record:",
+    "",
+    `Date: ${r.date}`,
+    `Body: ${r.body}${r.agenda_number ? ` (item ${r.agenda_number})` : ""}`,
+    `Item: ${r.title}`,
+    r.action ? `Recorded outcome: ${r.action}` : "No outcome recorded in the published record.",
+    `Official record: ${r.url}`,
+    "",
+    "My question is:",
+  ].join("\n");
+  return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function prettyDate(iso: string) {
@@ -98,6 +112,14 @@ export default function Explorer({ facets }: { facets: Facets }) {
   const total = years.reduce((a, y) => a + y.count, 0);
   const peak = Math.max(1, ...years.map((y) => y.count));
   const span = Array.from({ length: lastYear - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i);
+  // Years the index holds nothing for at all: missing records, not quiet years.
+  const indexed = new Set(facets.years);
+  const gaps = span.filter((y) => !indexed.has(y));
+  const gapRun = (y: number) => {
+    let n = 0;
+    while (gaps.includes(y + n)) n++;
+    return n;
+  };
   const pinned = form.since && form.since === form.until ? Number(form.since) : null;
   const filtered = ran && (ran.body || ran.since || ran.until || ran.action);
 
@@ -152,13 +174,18 @@ export default function Explorer({ facets }: { facets: Facets }) {
             </div>
             <div className="chart" style={{ ["--years" as string]: span.length }}>
               {span.map((y) => {
-                if (y === GAP[0])
+                if (gaps.includes(y)) {
+                  if (gaps.includes(y - 1)) return null; // drawn by the run's first year
+                  const run = gapRun(y);
                   return (
-                    <div key={y} className="yr gap" style={{ gridColumn: `span ${GAP.length}` }}>
-                      <span className="gaplabel">Record not yet indexed<br />Apr 2017 – 2021</span>
+                    <div key={y} className="yr gap" style={{ gridColumn: `span ${run}` }}>
+                      <span className="gaplabel">
+                        Not yet indexed
+                        {run > 1 ? <><br />{y} – {y + run - 1}</> : <><br />{y}</>}
+                      </span>
                     </div>
                   );
-                if (GAP.includes(y)) return null;
+                }
                 const n = byYear.get(y) ?? 0;
                 const cls = ["yr", n === 0 && "zero", pinned && pinned !== y && "dim"].filter(Boolean).join(" ");
                 return (
@@ -182,10 +209,20 @@ export default function Explorer({ facets }: { facets: Facets }) {
                 <span key={y}>&rsquo;{String(y).slice(2)}</span>
               ))}
             </div>
-            <p className="note">
-              The hatched years are missing from this index, not quiet years for council. The
-              Clerk&rsquo;s printed Journals cover them.
-            </p>
+            {gaps.length > 0 && (
+              <p className="note">
+                Hatched years are missing from this index, not quiet years for council. Their
+                record lives in the City Clerk&rsquo;s printed Journals —{" "}
+                <a
+                  href="https://detroitmi.gov/government/city-clerk/journals-city-council"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  published here as PDFs ↗
+                </a>
+                .
+              </p>
+            )}
           </section>
 
           <section aria-label="Results">
@@ -225,6 +262,9 @@ export default function Explorer({ facets }: { facets: Facets }) {
                       </span>
                       <a href={r.url} target="_blank" rel="noopener noreferrer">
                         Official record ↗
+                      </a>
+                      <a href={mailto(r)} className="ask">
+                        Email council about this
                       </a>
                     </div>
                   </div>

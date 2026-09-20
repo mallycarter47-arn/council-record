@@ -74,9 +74,34 @@ export function timeline(q: string): Promise<YearCount[]> {
   return runSearchPy([q, "--timeline", "--json"]) as Promise<YearCount[]>;
 }
 
+export type Meeting = {
+  body_name: string;
+  starts_at: string;
+  location: string | null;
+  url: string | null;
+};
+
+// Cached by scripts/fetch_upcoming.py so this works with the network off.
+export function nextMeetings(limit = 2): Meeting[] {
+  const db = new DatabaseSync(/*turbopackIgnore: true*/ DB, { readOnly: true });
+  try {
+    return db
+      .prepare(
+        "SELECT body_name, starts_at, location, url FROM upcoming_meetings" +
+          " WHERE starts_at >= ? ORDER BY starts_at LIMIT ?",
+      )
+      .all(new Date().toISOString().slice(0, 19), limit) as Meeting[];
+  } catch {
+    return [];
+  } finally {
+    db.close();
+  }
+}
+
 export type Facets = {
   bodies: string[];
   actions: string[];
+  years: number[];
   items: number;
   meetings: number;
   first: string;
@@ -96,7 +121,15 @@ export function facets(): Facets {
           " (SELECT MAX(event_date) FROM agenda_items) AS last",
       )
       .get() as { items: number; meetings: number; first: string; last: string };
+    // Which years the index actually covers, so the UI can mark the rest as
+    // missing records rather than as quiet years.
+    const years = (
+      db.prepare("SELECT DISTINCT event_year AS y FROM agenda_items ORDER BY 1").all() as {
+        y: number;
+      }[]
+    ).map((r) => r.y);
     return {
+      years,
       bodies: col("SELECT body_name FROM agenda_items GROUP BY 1 ORDER BY COUNT(*) DESC"),
       actions: col(
         "SELECT action_name FROM agenda_items WHERE action_name IS NOT NULL" +
