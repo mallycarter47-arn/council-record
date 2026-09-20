@@ -1,0 +1,16 @@
+# Everything the bot doesn't need. The database IS shipped (see Dockerfile);
+# the raw caches and the web UI are not.
+.git
+.venv
+data/raw
+web
+node_modules
+agent/node_modules
+agent/dist
+agent/.env
+agent/data
+db/*.db-wal
+db/*.db-shm
+docs
+__pycache__
+*.pyc
