@@ -19,9 +19,9 @@ export default function Home() {
           What did council <span>actually do?</span>
         </h1>
         <p>
-          Every meeting is already public. Until now you had to know the file number to find
-          anything. Search by topic and get the agenda item, the date, the outcome, and a link
-          to the official record.
+          The record is public, and split across three city systems that stop and start in
+          different years. Search all of them at once: get the agenda item, the date, what
+          council did, and a link to the city&rsquo;s own record.
         </p>
         <div className="ledger">
           {f.items.toLocaleString()} agenda items · {f.meetings.toLocaleString()} meetings ·{" "}
@@ -31,8 +31,9 @@ export default function Home() {
       <CouncilBar meetings={meetings} />
       <Explorer facets={f} />
       <p className="foot-note">
-        Sources: Detroit Legistar (2013–2017) and eSCRIBE (2022–present), read from the
-        city&rsquo;s own public records. This tool reports the record; it does not judge it.
+        Sources: Detroit Legistar (2013–2017), the City Clerk&rsquo;s Journals of Proceedings
+        (2017–2020), and eSCRIBE (2022–present) — all read from the city&rsquo;s own public
+        records. This tool reports the record; it does not judge it.
       </p>
     </main>
   );
