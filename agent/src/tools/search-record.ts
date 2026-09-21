@@ -64,6 +64,42 @@ export function yearsNotIndexed(): number[] {
 	}
 }
 
+/** Meetings still to come, cached by scripts/fetch_upcoming.py. */
+export const nextMeetings = defineTool({
+	name: 'next_meetings',
+	description:
+		'Upcoming Detroit City Council meetings — when the next one is, which body, where, ' +
+		'and a link to its agenda. Use for any question about attending, speaking, or when ' +
+		'council next meets. Returns nothing if the cache has not been refreshed recently.',
+	input: v.object({ limit: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(10))) }),
+	async run({ data }) {
+		const db = new DatabaseSync(path.join(ROOT, 'db', 'council_record.db'), { readOnly: true });
+		try {
+			const rows = db
+				.prepare(
+					'SELECT body_name, starts_at, location, url FROM upcoming_meetings' +
+						' WHERE starts_at >= ? ORDER BY starts_at LIMIT ?',
+				)
+				.all(new Date().toISOString().slice(0, 19), data.limit ?? 3) as {
+				body_name: string;
+				starts_at: string;
+				location: string | null;
+				url: string | null;
+			}[];
+			return {
+				output: {
+					meetings: rows,
+					note: rows.length
+						? 'Times are local. Anyone may attend; the agenda link lists how public comment works.'
+						: 'No upcoming meetings in the cache — point people at pub-detroitmi.escribemeetings.com for the live calendar.',
+				},
+			};
+		} finally {
+			db.close();
+		}
+	},
+});
+
 type Result = {
 	title: string;
 	action: string | null;

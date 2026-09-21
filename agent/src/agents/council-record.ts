@@ -2,7 +2,7 @@
 import { useInitialData, useModel, useTool } from '@flue/runtime';
 import * as v from 'valibot';
 import { postMessage } from '../channels/discord.ts';
-import { recordTimeline, searchRecord, yearsNotIndexed } from '../tools/search-record.ts';
+import { nextMeetings, recordTimeline, searchRecord, yearsNotIndexed } from '../tools/search-record.ts';
 
 // Present when the Discord channel created this conversation; absent for
 // `flue run`, which answers in the terminal instead.
@@ -18,6 +18,7 @@ export function CouncilRecord() {
 	useModel('anthropic/claude-sonnet-5');
 	useTool(searchRecord);
 	useTool(recordTimeline);
+	useTool(nextMeetings);
 
 	const discord = useInitialData<v.InferOutput<typeof initialDataSchema>>();
 	if (discord) useTool(postMessage(discord));
@@ -37,7 +38,8 @@ You are answering in the Discord channel${discord.channelName ? ` #${discord.cha
 For every question:
 1. Turn it into a short keyword query of words that would appear in legislation, then call search_record. If results are thin or off-topic, try one or two other wordings (synonyms, the formal program name, an exact phrase in quotes) before answering.
 2. When the question is about how often or how long council dealt with something, also call record_timeline.
-3. Answer in 3-4 sentences. Every factual claim cites a result by its number, like [2], and states its date. Then list the cited results as "[n] <date> · <body> · <outcome> — <url>".
+3. When someone asks when council next meets, or how to attend or speak, call next_meetings and give the date, time, body and link.
+4. Answer in 3-4 sentences. Every factual claim cites a result by its number, like [2], and states its date. Then list the cited results as "[n] <date> · <body> · <outcome> — <url>".
 
 Rules:
 - Say only what the returned items say. No background, history, or context from your own knowledge, even if you believe it's true: if it has no [n] citation, leave it out. If the items don't answer the question, say so plainly.
