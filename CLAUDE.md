@@ -7,13 +7,19 @@ taken, and a link to the record.
 ## Why this exists
 
 Detroit's legislative record is technically public and practically unusable.
-detroit.legistar.com has every meeting, agenda, and set of minutes going back
-years. But you can only find something if you already know its file number or
-the exact meeting it happened at. A resident who wants to know "what has council
-done about water shutoffs" has no path in.
+Both official portals have a search box, and both are real: detroit.legistar.com
+searches 2013 to 2018 and stops; pub-detroitmi.escribemeetings.com searches 2022
+to now. The four years between are published only as 2,500-page PDFs that
+neither one indexes, and 2021 only inside a document viewer you cannot download
+from. A resident who wants to know "what has council done about water shutoffs"
+has to know all three systems exist, search two of them separately, and skip the
+rest.
 
-The information is not hidden. It is unsearchable, which is close enough to
-hidden that the difference does not matter to the person who needs it.
+The information is not hidden, and it is not unfindable one file at a time. What
+no official tool does is span the three sources, count what it finds, or rank it
+— so the record cannot answer the question people actually have: how often did
+council take this up, and what happened each time. The gap is aggregation, not
+retrieval.
 
 ## Scope
 
