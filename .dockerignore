@@ -3,7 +3,8 @@
 .git
 .venv
 data/raw
-web
+web/node_modules
+web/.next
 node_modules
 agent/node_modules
 agent/dist

@@ -1,0 +1,40 @@
+# The public search site. Same shape as the bot's image: Node for the UI,
+# python3 + scripts/search.py + the SQLite index for the searching itself.
+# The UI shells out to search.py exactly as it does on a laptop, so ranking
+# lives in one place.
+
+FROM node:24-slim AS build
+
+WORKDIR /app/web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+# The build reads the database for counts and facets.
+COPY db/council_record.db /app/db/council_record.db
+RUN npm run build
+
+# ---------------------------------------------------------------------------
+
+FROM node:24-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY scripts/ ./scripts/
+COPY db/council_record.db ./db/council_record.db
+COPY --from=build /app/web/node_modules ./web/node_modules
+COPY --from=build /app/web/.next ./web/.next
+COPY --from=build /app/web/public ./web/public
+COPY web/package.json web/next.config.ts ./web/
+
+ENV NODE_ENV=production \
+    COUNCIL_PYTHON=python3 \
+    PORT=8080 \
+    HOSTNAME=0.0.0.0
+
+EXPOSE 8080
+WORKDIR /app/web
+CMD ["npm", "run", "start", "--", "-p", "8080", "-H", "0.0.0.0"]
