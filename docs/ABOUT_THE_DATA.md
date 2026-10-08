@@ -1,6 +1,6 @@
 # About the data
 
-Council Record searches what Detroit City Council actually did. This page
+Civic Memory searches what Detroit City Council actually did. This page
 explains where the records come from, what a search result is, what the
 tool covers and what it doesn't, and how search works.
 

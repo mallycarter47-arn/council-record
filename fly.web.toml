@@ -1,5 +1,5 @@
-# The public Council Record search site.
-app = "council-record"
+# The public Civic Memory search site (formerly council-record.fly.dev).
+app = "civic-memory"
 primary_region = "ord"
 
 [build]

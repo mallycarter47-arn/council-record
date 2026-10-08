@@ -20,7 +20,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Council Record",
+  title: "Civic Memory",
   description:
     "Search what Detroit City Council actually did. Every result links to the official record.",
 };

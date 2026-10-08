@@ -1,10 +1,10 @@
-# Council Record Index
+# Civic Memory
 
 **Search what Detroit City Council actually did.** Type a topic and get the
 agenda items: the date, which body met, what council did, and a link to the
 city's own record for every result.
 
-**Live:** [council-record.fly.dev](https://council-record.fly.dev) · also
+**Live:** [civic-memory.fly.dev](https://civic-memory.fly.dev) · also
 answers `/ask` in Discord.
 
 ---
