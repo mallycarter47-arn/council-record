@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
+import { startAlertSchedule } from './alerts.ts';
 import { channel as discord } from './channels/discord.ts';
 
 const app = new Hono();
@@ -14,5 +15,9 @@ app.use('*', logger());
 // still runs it directly from the terminal.
 app.route('/channels/discord', discord.route());
 app.get('/health', (c) => c.text('ok'));
+
+// The daily keyword-alert run (see alerts.ts). Off unless ALERTS_SCHEDULE=1,
+// which only the Fly image sets.
+startAlertSchedule();
 
 export default app;

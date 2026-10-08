@@ -34,7 +34,8 @@ Hackathon build. Demo-only.
   citing a specific agenda item
 
 **Out of scope — do not build these**
-- User accounts, saved searches, email digests
+- User accounts, email digests. (Saved searches now exist as Discord keyword
+  alerts — `scripts/alerts.py`, `/watch` in the bot — added after the hackathon.)
 - Video transcription. It is a rabbit hole and the agenda items are enough for
   a demo. Note it as v2 and move on.
 - Any vector database. See "Search approach" below.

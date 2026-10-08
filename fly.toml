@@ -20,6 +20,12 @@ primary_region = "ord"
     method = "GET"
     path = "/health"
 
+# The live database: seeded from the image on first boot, then refreshed every
+# morning by the alert run, and home to the alert subscriptions.
+[mounts]
+  source = "civic_data"
+  destination = "/data"
+
 [[vm]]
   size = "shared-cpu-1x"
   memory = "512mb"

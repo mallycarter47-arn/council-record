@@ -1,4 +1,4 @@
-// Registers the /ask slash command for this Discord application.
+// Registers the bot's slash commands (/ask, /watch, /unwatch, /watching).
 // Run once (re-running is safe; it overwrites the command set):
 //   npm run register-commands
 import { readFileSync } from 'node:fs';
@@ -27,6 +27,45 @@ const commands = [
 				max_length: 300,
 			},
 		],
+		integration_types: [0],
+		contexts: [0],
+	},
+	{
+		name: 'watch',
+		type: 1,
+		description: 'Post here when a topic shows up on a new or upcoming council agenda.',
+		options: [
+			{
+				type: 3,
+				name: 'search',
+				description: 'Words to watch for, e.g. water shutoff, Land Bank, data center',
+				required: true,
+				max_length: 100,
+			},
+		],
+		integration_types: [0],
+		contexts: [0],
+	},
+	{
+		name: 'unwatch',
+		type: 1,
+		description: 'Stop one of this channel\'s alerts.',
+		options: [
+			{
+				type: 4,
+				name: 'number',
+				description: 'The # from /watching',
+				required: true,
+				min_value: 1,
+			},
+		],
+		integration_types: [0],
+		contexts: [0],
+	},
+	{
+		name: 'watching',
+		type: 1,
+		description: 'List the searches this channel is watching.',
 		integration_types: [0],
 		contexts: [0],
 	},

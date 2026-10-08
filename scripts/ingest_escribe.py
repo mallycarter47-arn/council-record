@@ -20,6 +20,16 @@ Usage:
     python scripts/ingest_escribe.py
     python scripts/ingest_escribe.py --since 2024-01-01
     python scripts/ingest_escribe.py --reparse     # after changing the parser
+    python scripts/ingest_escribe.py --refresh 14  # re-pull the last 14 days
+                                                   # and the next 30 (alerts)
+
+--refresh is what the daily alert run uses. Normal runs load each past meeting
+once and never look again; a refresh re-downloads every meeting in the window,
+cached or not, so an agenda posted for next week shows up, and a meeting whose
+minutes were posted since last time gets its outcomes.
+
+COUNCIL_DB and COUNCIL_RAW override the database and cache paths (the bot keeps
+both on a Fly volume).
 """
 
 import argparse
@@ -29,15 +39,16 @@ import os
 import re
 import sqlite3
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import requests
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
-DB_PATH = os.path.join(ROOT, "db", "council_record.db")
+DB_PATH = os.environ.get("COUNCIL_DB") or os.path.join(ROOT, "db", "council_record.db")
 SCHEMA_PATH = os.path.join(ROOT, "db", "schema.sql")
-RAW_DIR = os.path.join(ROOT, "data", "raw", "escribe")
+RAW_DIR = os.path.join(os.environ.get("COUNCIL_RAW") or os.path.join(ROOT, "data", "raw"),
+                       "escribe")
 
 BASE = "https://pub-detroitmi.escribemeetings.com"
 RATE_LIMIT = 0.25
@@ -144,10 +155,11 @@ def event_id_for(conn, guid):
     return nxt
 
 
-def meeting_page(session, guid, kind):
-    """kind is 'PostMinutes' or 'Agenda'. Cached on disk."""
+def meeting_page(session, guid, kind, fresh=False):
+    """kind is 'PostMinutes' or 'Agenda'. Cached on disk; fresh=True skips the
+    cache, because an agenda can change between posting and the meeting."""
     path = os.path.join(RAW_DIR, f"{guid}.{kind}.html")
-    if os.path.exists(path):
+    if os.path.exists(path) and not fresh:
         with open(path, encoding="utf-8") as fh:
             return fh.read()
     resp = get(session, f"{BASE}/Meeting.aspx",
@@ -196,12 +208,16 @@ def parse_items(page):
     return items
 
 
-def load(conn, session, meetings, today):
-    done = {r[0] for r in conn.execute(
-        "SELECT m.guid FROM escribe_meetings m"
-        " JOIN ingest_progress p ON p.event_id = m.event_id")}
-    pending = [m for m in meetings
-               if m["ID"] not in done and m["StartDate"][:10] <= today]
+def load(conn, session, meetings, today, refresh=False):
+    if refresh:
+        # Every meeting in the window, including upcoming ones, re-downloaded.
+        pending = list(meetings)
+    else:
+        done = {r[0] for r in conn.execute(
+            "SELECT m.guid FROM escribe_meetings m"
+            " JOIN ingest_progress p ON p.event_id = m.event_id")}
+        pending = [m for m in meetings
+                   if m["ID"] not in done and m["StartDate"][:10] <= today]
     pending.sort(key=lambda m: m["StartDate"], reverse=True)
 
     total = len(pending)
@@ -215,7 +231,7 @@ def load(conn, session, meetings, today):
         guid = m["ID"]
         has_minutes = doc_link(m, "PostMinutes", "HTML") is not None
         kind = "PostMinutes" if has_minutes else "Agenda"
-        page = meeting_page(session, guid, kind)
+        page = meeting_page(session, guid, kind, fresh=refresh)
         if page is None:
             print(f"  Failed on {m['StartDate']} {m['MeetingName']}. Re-run to resume.")
             break
@@ -310,6 +326,9 @@ def main():
     ap.add_argument("--since", default="2017-01-01")
     ap.add_argument("--reparse", action="store_true",
                     help="re-parse every meeting from cached HTML (after a parser fix)")
+    ap.add_argument("--refresh", type=int, metavar="DAYS",
+                    help="re-download meetings from DAYS ago through 30 days ahead")
+    ap.add_argument("--quiet", action="store_true", help="skip the summary report")
     args = ap.parse_args()
 
     conn = build_db()
@@ -319,15 +338,20 @@ def main():
     session = requests.Session()
     session.headers.update(HEADERS)
     today = date.today().isoformat()
+    since, until = args.since, today
+    if args.refresh is not None:
+        since = (date.today() - timedelta(days=args.refresh)).isoformat()
+        until = (date.today() + timedelta(days=30)).isoformat()
 
-    print(f"Loading eSCRIBE meeting list since {args.since}...")
-    meetings = fetch_meetings(session, args.since, today)
+    print(f"Loading eSCRIBE meeting list {since} .. {until}...")
+    meetings = fetch_meetings(session, since, until)
     print(f"  {len(meetings)} meetings with agendas")
     if not meetings:
         return
 
     print("\nLoading agenda items...")
-    n_events, n_items = load(conn, session, meetings, today.replace("-", "/"))
+    n_events, n_items = load(conn, session, meetings, today.replace("-", "/"),
+                             refresh=args.refresh is not None)
 
     conn.execute(
         "INSERT INTO ingest_log (source, events_loaded, items_loaded, earliest,"
@@ -337,7 +361,8 @@ def main():
          EVENT_ID_BASE),
     )
     conn.commit()
-    report(conn)
+    if not args.quiet:
+        report(conn)
     conn.close()
 
 

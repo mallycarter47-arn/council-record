@@ -171,3 +171,39 @@ CREATE TABLE IF NOT EXISTS ingest_log (
     latest       TEXT,
     ingested_at  TEXT NOT NULL
 );
+
+-- ---------------------------------------------------------------------------
+-- Keyword alerts (scripts/alerts.py). Only the bot's live copy of the
+-- database, on its Fly volume, ever has rows here.
+-- ---------------------------------------------------------------------------
+
+-- One saved search, posted to the Discord channel where /watch was run.
+CREATE TABLE IF NOT EXISTS alert_subscriptions (
+    id           INTEGER PRIMARY KEY,
+    guild_id     TEXT,
+    channel_id   TEXT NOT NULL,
+    user_id      TEXT,
+    query        TEXT NOT NULL,
+    created_at   TEXT NOT NULL,
+    active       INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_subs_channel ON alert_subscriptions(channel_id);
+
+-- What each subscription has already been told about. Keyed on meeting +
+-- agenda position + title rather than item_id, because a refresh deletes and
+-- re-inserts a meeting's items when its minutes come out.
+CREATE TABLE IF NOT EXISTS alert_sent (
+    subscription_id INTEGER NOT NULL,
+    alert_key       TEXT NOT NULL,
+    sent_at         TEXT NOT NULL,
+    PRIMARY KEY (subscription_id, alert_key)
+);
+
+-- One row per daily run, so a restart doesn't run it twice.
+CREATE TABLE IF NOT EXISTS alert_runs (
+    run_date     TEXT PRIMARY KEY,   -- Detroit-local date
+    started_at   TEXT NOT NULL,
+    finished_at  TEXT,
+    alerts_sent  INTEGER
+);

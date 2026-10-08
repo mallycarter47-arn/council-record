@@ -22,7 +22,7 @@ import sys
 from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(HERE, "..", "db", "council_record.db")
+DB_PATH = os.environ.get("COUNCIL_DB") or os.path.join(HERE, "..", "db", "council_record.db")
 
 # Column weights for bm25(). Order matches the fts5 table definition:
 # title, action_text, agenda_note, minutes_note, matter_file, body_name

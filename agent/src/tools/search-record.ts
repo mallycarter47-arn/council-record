@@ -12,6 +12,8 @@ import * as v from 'valibot';
 const ROOT = process.env.COUNCIL_ROOT ?? path.resolve(process.cwd(), '..');
 const PYTHON = process.env.COUNCIL_PYTHON ?? path.join(ROOT, '.venv', 'bin', 'python');
 const SEARCH = path.join(ROOT, 'scripts', 'search.py');
+// On Fly the bot reads its own live copy, refreshed daily by alerts.py.
+const DB = process.env.COUNCIL_DB ?? path.join(ROOT, 'db', 'council_record.db');
 
 export function runSearch(args: string[], signal?: AbortSignal): Promise<unknown> {
 	return new Promise((resolve, reject) => {
@@ -42,7 +44,7 @@ export function runSearch(args: string[], signal?: AbortSignal): Promise<unknown
  */
 export function yearsNotIndexed(): number[] {
 	try {
-		const db = new DatabaseSync(path.join(ROOT, 'db', 'council_record.db'), {
+		const db = new DatabaseSync(DB, {
 			readOnly: true,
 		});
 		try {
@@ -73,7 +75,7 @@ export const nextMeetings = defineTool({
 		'council next meets. Returns nothing if the cache has not been refreshed recently.',
 	input: v.object({ limit: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(10))) }),
 	async run({ data }) {
-		const db = new DatabaseSync(path.join(ROOT, 'db', 'council_record.db'), { readOnly: true });
+		const db = new DatabaseSync(DB, { readOnly: true });
 		try {
 			const rows = db
 				.prepare(
