@@ -1,0 +1,5 @@
+# council-record.fly.dev was the site's first address. Send every request to
+# the same path on civic-memory.fly.dev so old shared links keep working.
+:8080 {
+	redir https://civic-memory.fly.dev{uri} permanent
+}

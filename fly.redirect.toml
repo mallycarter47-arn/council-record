@@ -1,0 +1,18 @@
+# The old council-record.fly.dev address, now a permanent redirect to
+# civic-memory.fly.dev. Fly apps can't be renamed, so this keeps old links alive.
+app = "council-record"
+primary_region = "ord"
+
+[build]
+  dockerfile = "redirect/Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
