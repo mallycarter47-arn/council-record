@@ -152,9 +152,13 @@ function tidyLinks(text: string): string {
 		.replace(/(?<![(<[])\bhttps?:\/\/[^\s<>()[\]]+/g, '[official record](<$&>)');
 }
 
+// Every /ask answer says who wrote it. Added here rather than in the prompt so
+// it can't be left out.
+const AI_NOTE = '\n-# AI-written summary of the cited records. Check the links before relying on it.';
+
 function chunks(text: string): string[] {
 	const out: string[] = [];
-	let rest = tidyLinks(text.trim());
+	let rest = tidyLinks(text.trim()) + AI_NOTE;
 	while (rest.length > MAX_MESSAGE) {
 		let cut = rest.lastIndexOf('\n', MAX_MESSAGE);
 		if (cut < MAX_MESSAGE / 2) cut = rest.lastIndexOf(' ', MAX_MESSAGE);

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import CouncilBar from "@/components/CouncilBar";
 import Explorer from "@/components/Explorer";
 import { facets, nextMeetings } from "@/lib/record";
@@ -33,7 +34,8 @@ export default function Home() {
       <p className="foot-note">
         Sources: Detroit Legistar (2013–2017), the City Clerk&rsquo;s Journals of Proceedings
         (2017–2020), and eSCRIBE (2022–present) — all read from the city&rsquo;s own public
-        records. This tool reports the record; it does not judge it.
+        records. This tool reports the record; it does not judge it.{" "}
+        <Link href="/privacy">Privacy</Link>
       </p>
     </main>
   );
