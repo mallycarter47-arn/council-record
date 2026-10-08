@@ -17,11 +17,11 @@ the last decade. No single one covers the whole period.
 | Years | Official source | What it contains | In this tool? |
 |---|---|---|---|
 | May 2013 – Mar 2017 | **Legistar** (`detroit.legistar.com`) | Meetings and agenda items. The city never filled in outcomes here, so these results have no "action taken". | Yes: 457 meetings, 19,547 items |
-| 2017 – 2021 | **Journals of Proceedings**, annual PDFs from the City Clerk | The full printed record of each session, including recorded votes | Yes, except 2021: 21,696 items from 2017, 2018, 2019 and 2020 |
+| 2017 – 2021 | **Journals of Proceedings**, annual PDFs from the City Clerk | The full printed record of each session, including recorded votes | Yes: 27,067 items from 2017 through November 23, 2021 |
 | 2022 – present | **eSCRIBE** (`pub-detroitmi.escribemeetings.com`) | Meetings, agenda items, and, where the Clerk has posted minutes, the outcome of each item ("Approved 9-0") | Yes: 1,207 meetings, 48,124 items (Jan 2022 – Sep 2026) |
 
-**In total:** 89,367 agenda items, May 2013 – September 2026, with every year
-covered except 2021. About 80% of the 2022-onward items have a recorded
+**In total:** 94,738 agenda items, May 2013 – September 2026, with every year
+covered. About 80% of the 2022-onward items have a recorded
 outcome, and the journal years add thousands more, many with the roll-call
 vote attached.
 
@@ -47,8 +47,12 @@ vote attached.
   of those PDFs, with the outcome taken from the clerk's own wording ("Adopted
   as follows: Yeas — … 8"). Each result links to the exact page of the
   official PDF.
-- **Only 2021 is still missing.** The Clerk posts that year through Adobe's
-  document viewer rather than as a direct PDF, so it hasn't been indexed yet.
+- **2021 is now indexed** (added October 2026): 5,371 items from 42 sessions,
+  January 5 – November 23, 2021. The Clerk posts that year through Adobe's
+  document viewer rather than as a direct PDF, so 2021 results link to the
+  whole journal; the viewer can't open a specific page.
+- **Late November–December 2021 is the one stretch left.** The 2021 journal
+  ends November 23, and eSCRIBE's record starts in 2022.
 - **What you'll see:** the timeline hatches only the years the index truly has
   nothing for, and labels them. A hatched year means the record is missing
   from this tool, not that council did nothing.
@@ -109,7 +113,8 @@ vote attached.
 
 ## Known limitations
 
-- **2021 is missing** (see "The gap" above). Every other year from 2013 on is covered.
+- **Late November–December 2021 is missing** (see "The gap" above). Everything
+  else from May 2013 on is covered.
 - **No outcomes for 2013–2017.** Legistar has no outcome data, so results
   from those years show no action taken.
 - **Not every 2022-onward item has an outcome.** An item shows one only

@@ -29,12 +29,11 @@ The gap is aggregation, not retrieval.
 
 ## What this is
 
-One index over all three sources: **89,367 agenda items across 1,827 meetings,
-May 2013 – September 2026**, 48,594 with a recorded outcome and thousands with
-the roll-call vote attached. Every year is covered except 2021, which the Clerk
-publishes only inside a document viewer that doesn't allow downloads — the
-timeline draws that year as a labelled gap rather than a zero, because a
-missing record and a quiet year are not the same thing.
+One index over all three sources: **94,738 agenda items across 1,869 meetings,
+May 2013 – September 2026**, 50,933 with a recorded outcome and thousands with
+the roll-call vote attached. Every year is covered. The one stretch the record
+doesn't reach is late November–December 2021, which falls between the 2021
+journal (it ends November 23) and eSCRIBE (it starts in 2022).
 
 Two ways in, one search engine behind both:
 
@@ -108,7 +107,9 @@ the frozen search path runs unchanged in production.
 
 ## Honest limits
 
-- **2021 is missing.** See above; it's the only year.
+- **Late November–December 2021 is missing.** See above; it's the only stretch.
+- **2021 links open the whole journal.** The Clerk posts 2021 through Adobe's
+  viewer, which ignores page numbers, so those results can't jump to their page.
 - **No outcomes before 2018.** Legistar has the meetings but the city never
   filled in what happened, so those results show no action taken.
 - **Journal items read like printed prose**, because that is what they are.

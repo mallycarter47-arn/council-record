@@ -51,7 +51,9 @@ SOURCE_URLS = {
     "2018": "https://detroitmi.gov/sites/detroitmi.localhost/files/2022-10/2018%20Council.pdf",
     "2019": "https://detroitmi.gov/sites/detroitmi.localhost/files/2022-10/2019%20Council.pdf",
     "2020": "https://detroitmi.gov/sites/detroitmi.localhost/files/2022-10/2020%20Council.pdf",
-    "2021": "https://detroitmi.gov/government/city-clerk/journals-city-council",
+    # 2021 is posted only through Adobe's viewer, which ignores #page=N, so
+    # these links open the whole journal rather than the item's page.
+    "2021": "https://acrobat.adobe.com/link/review?uri=urn:aaid:scds:US:9bf74340-d101-3f6c-8426-4d74ae086217",
 }
 
 MONTHS = ("January February March April May June July August September "
