@@ -16,7 +16,7 @@ export default function Privacy() {
           <Link href="/">Civic Memory</Link>
         </div>
         <h1>Privacy</h1>
-        <p>Last updated October 8, 2026.</p>
+        <p>Last updated October 8, 2026 (Slack added).</p>
       </header>
 
       <p>
@@ -58,6 +58,19 @@ export default function Privacy() {
         <li>
           Discord itself handles everything else about your account under{" "}
           <a href="https://discord.com/privacy">its own policy</a>.
+        </li>
+      </ul>
+
+      <h2>In Slack</h2>
+      <ul>
+        <li>
+          <strong>/civic watch.</strong> Same as Discord: the words you watch for, the
+          workspace and channel to post in, and the Slack user ID of whoever set it up.
+        </li>
+        <li>
+          <strong>Installing the app</strong> gives Civic Memory a token to post alert
+          messages in your workspace. It can&rsquo;t read your messages. Uninstalling the app
+          deletes the token and turns off that workspace&rsquo;s alerts.
         </li>
       </ul>
 

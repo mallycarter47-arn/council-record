@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Keyword alerts. Someone runs /watch "water shutoff" in a Discord channel; every
+Keyword alerts. Someone runs /watch "water shutoff" in a Discord channel (or
+/civic watch water shutoff in Slack); every
 morning this re-pulls the meetings around today from eSCRIBE, and when a
 watched search matches an item on an upcoming (or just-held) agenda, it posts
 the item to that channel. Each item is posted once per subscription.
@@ -8,10 +9,13 @@ the item to that channel. Each item is posted once per subscription.
 The bot calls the subcommands and reads their JSON:
 
     python scripts/alerts.py add --channel C --guild G --user U --query "water shutoff"
+    python scripts/alerts.py add --platform slack --channel C --guild TEAM --query "..."
     python scripts/alerts.py list --channel C
     python scripts/alerts.py remove --channel C --id 3
     python scripts/alerts.py run              # hourly; acts once a day after 7am Detroit
     python scripts/alerts.py run --force --dry-run --no-refresh   # testing
+    SLACK_BOT_TOKEN=xoxb-... python scripts/alerts.py slack-install --team T
+    python scripts/alerts.py slack-uninstall --team T
 
 Matching uses search.py's clean_query, so an alert finds exactly what the same
 words find in the search box.
@@ -49,6 +53,12 @@ def connect():
     conn = sqlite3.connect(DB_PATH)
     with open(SCHEMA_PATH, encoding="utf-8") as fh:
         conn.executescript(fh.read())
+    # Databases created before Slack support lack the platform column.
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(alert_subscriptions)")}
+    if "platform" not in cols:
+        conn.execute("ALTER TABLE alert_subscriptions"
+                     " ADD COLUMN platform TEXT NOT NULL DEFAULT 'discord'")
+        conn.commit()
     return conn
 
 
@@ -90,11 +100,12 @@ def add(conn, args):
                          " WHERE channel_id = ? AND active = 1", (args.channel,)).fetchone()[0]
     if count >= MAX_PER_CHANNEL:
         return out({"ok": False, "error": f"This channel already watches {count} searches. "
-                    "Remove one with /unwatch first."})
+                    "Remove one first."})
 
     cur = conn.execute(
-        "INSERT INTO alert_subscriptions (guild_id, channel_id, user_id, query, created_at)"
-        " VALUES (?,?,?,?,?)", (args.guild, args.channel, args.user, query, now_iso()))
+        "INSERT INTO alert_subscriptions (platform, guild_id, channel_id, user_id, query,"
+        " created_at) VALUES (?,?,?,?,?,?)",
+        (args.platform, args.guild, args.channel, args.user, query, now_iso()))
     conn.commit()
     out({"ok": True, "id": cur.lastrowid, "query": query, "duplicate": False,
          "past_matches": total})
@@ -115,10 +126,36 @@ def remove(conn, args):
     conn.commit()
     if not cur.rowcount:
         return out({"ok": False, "error": f"No watch #{args.id} in this channel. "
-                    "Use /watching to see the numbers."})
+                    "List this channel's watches to see the numbers."})
     row = conn.execute("SELECT query FROM alert_subscriptions WHERE id = ?",
                        (args.id,)).fetchone()
     out({"ok": True, "id": args.id, "query": row[0]})
+
+
+# ---------------------------------------------------------------------------
+# Slack installs
+# ---------------------------------------------------------------------------
+
+def slack_install(conn, args):
+    # The token comes in through the environment, never argv, so it doesn't show
+    # up in a process listing.
+    token = os.environ.get("SLACK_INSTALL_TOKEN")
+    if not token:
+        return out({"ok": False, "error": "SLACK_INSTALL_TOKEN is not set"})
+    conn.execute(
+        "INSERT OR REPLACE INTO slack_installs (team_id, team_name, bot_token, bot_user_id,"
+        " installed_by, installed_at) VALUES (?,?,?,?,?,?)",
+        (args.team, args.team_name, token, args.bot_user, args.user, now_iso()))
+    conn.commit()
+    out({"ok": True, "team": args.team})
+
+
+def slack_uninstall(conn, args):
+    conn.execute("DELETE FROM slack_installs WHERE team_id = ?", (args.team,))
+    cur = conn.execute("UPDATE alert_subscriptions SET active = 0"
+                       " WHERE platform = 'slack' AND guild_id = ? AND active = 1", (args.team,))
+    conn.commit()
+    out({"ok": True, "team": args.team, "subscriptions_stopped": cur.rowcount})
 
 
 # ---------------------------------------------------------------------------
@@ -165,25 +202,40 @@ def meeting_label(item):
     return f"{label} · {item['body']}"
 
 
-def format_alert(query, items, today):
-    lines = [f"🔔 **New on the agenda: `{query}`**"]
+def slack_escape(text):
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def format_alert(query, items, today, platform="discord"):
+    """Discord markdown and Slack mrkdwn differ in bold, italics, links and
+    escaping; everything else about an alert is the same."""
+    slack = platform == "slack"
+    esc = slack_escape if slack else (lambda t: t)
+    bold = (lambda t: f"*{t}*") if slack else (lambda t: f"**{t}**")
+    ital = (lambda t: f"_{t}_") if slack else (lambda t: f"*{t}*")
+    link = (lambda url, label: f"<{url}|{label}>") if slack else (lambda url, label: f"[{label}](<{url}>)")
+    search_url = f"https://civic-memory.fly.dev/?q={query.replace(' ', '+')}"
+
+    lines = [f"🔔 {bold('New on the agenda:')} `{esc(query)}`"]
     shown = items[:MAX_ITEMS_PER_ALERT]
     last = None
     for it in shown:
         meeting = meeting_label(it)
         if meeting != last:
             when = "upcoming" if it["date"] >= today else "held"
-            lines.append(f"\n**{meeting}** ({when})")
+            lines.append(f"\n{bold(esc(meeting))} ({when})")
             last = meeting
         title = it["title"] if len(it["title"]) <= 180 else it["title"][:180].rsplit(" ", 1)[0] + " …"
         num = f"{it['agenda_number']} " if it["agenda_number"] else ""
-        outcome = f" — *{it['action']}*" if it["action"] else ""
-        link = f" [official record](<{it['url']}>)" if it["url"] else ""
-        lines.append(f"• {num}{title}{outcome}{link}")
+        outcome = f" — {ital(esc(it['action']))}" if it["action"] else ""
+        record = f" {link(it['url'], 'official record')}" if it["url"] else ""
+        lines.append(f"• {esc(num + title)}{outcome}{record}")
     if len(items) > len(shown):
-        lines.append(f"\n…and {len(items) - len(shown)} more. "
-                     f"Search it: <https://civic-memory.fly.dev/?q={query.replace(' ', '+')}>")
-    lines.append("\n-# /unwatch to stop · Civic Memory reports the record; check the link for details.")
+        more = f"…and {len(items) - len(shown)} more. "
+        lines.append("\n" + more + (link(search_url, "Search it") if slack else f"Search it: <{search_url}>"))
+    stop = "/civic unwatch" if slack else "/unwatch"
+    footer = f"{stop} to stop · Civic Memory reports the record; check the link for details."
+    lines.append(f"\n{ital(footer)}" if slack else f"\n-# {footer}")
     return split("\n".join(lines))
 
 
@@ -198,6 +250,25 @@ def split(text):
     if text:
         parts.append(text)
     return parts
+
+
+def post_slack(conn, team_id, channel_id, content):
+    import requests
+    row = conn.execute("SELECT bot_token FROM slack_installs WHERE team_id = ?",
+                       (team_id,)).fetchone()
+    if not row:
+        raise RuntimeError(f"Slack workspace {team_id} is not installed")
+    resp = requests.post(
+        "https://slack.com/api/chat.postMessage",
+        headers={"Authorization": f"Bearer {row[0]}"},
+        json={"channel": channel_id, "text": content,
+              "unfurl_links": False, "unfurl_media": False},
+        timeout=30,
+    )
+    body = resp.json()
+    if not body.get("ok"):
+        # not_in_channel: a private channel the app wasn't invited to.
+        raise RuntimeError(f"Slack {body.get('error')}")
 
 
 def post(channel_id, content):
@@ -230,8 +301,8 @@ def run(conn, args):
                         (run_date,)).fetchone():
             return out({"ok": True, "skipped": "already ran today"})
 
-    subs = conn.execute("SELECT id, channel_id, query FROM alert_subscriptions"
-                        " WHERE active = 1 ORDER BY id").fetchall()
+    subs = conn.execute("SELECT id, platform, guild_id, channel_id, query"
+                        " FROM alert_subscriptions WHERE active = 1 ORDER BY id").fetchall()
     if not args.dry_run:
         conn.execute("INSERT OR REPLACE INTO alert_runs (run_date, started_at) VALUES (?, ?)",
                      (run_date, now_iso()))
@@ -244,18 +315,21 @@ def run(conn, args):
 
     since = (local.date() - timedelta(days=LOOKBACK_DAYS)).isoformat()
     sent, failed = 0, []
-    for sub_id, channel_id, query in subs:
+    for sub_id, platform, guild_id, channel_id, query in subs:
         items = matches(conn, sub_id, query, since)
         if not items:
             continue
-        messages = format_alert(query, items, run_date)
+        messages = format_alert(query, items, run_date, platform)
         if args.dry_run:
-            print(f"--- #{sub_id} -> channel {channel_id}")
+            print(f"--- #{sub_id} -> {platform} channel {channel_id}")
             print("\n\n".join(messages))
             continue
         try:
             for m in messages:
-                post(channel_id, m)
+                if platform == "slack":
+                    post_slack(conn, guild_id, channel_id, m)
+                else:
+                    post(channel_id, m)
         except Exception as exc:  # noqa: BLE001 — one bad channel can't stop the rest
             failed.append({"id": sub_id, "error": str(exc)})
             continue
@@ -275,6 +349,7 @@ def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("add")
+    a.add_argument("--platform", choices=["discord", "slack"], default="discord")
     a.add_argument("--channel", required=True)
     a.add_argument("--guild")
     a.add_argument("--user")
@@ -288,10 +363,18 @@ def main():
     n.add_argument("--force", action="store_true", help="ignore the time and once-a-day checks")
     n.add_argument("--dry-run", action="store_true", help="print alerts, send and record nothing")
     n.add_argument("--no-refresh", action="store_true", help="skip the eSCRIBE re-pull")
+    si = sub.add_parser("slack-install")
+    si.add_argument("--team", required=True)
+    si.add_argument("--team-name")
+    si.add_argument("--bot-user")
+    si.add_argument("--user")
+    su = sub.add_parser("slack-uninstall")
+    su.add_argument("--team", required=True)
     args = ap.parse_args()
 
     conn = connect()
-    {"add": add, "list": list_subs, "remove": remove, "run": run}[args.cmd](conn, args)
+    {"add": add, "list": list_subs, "remove": remove, "run": run,
+     "slack-install": slack_install, "slack-uninstall": slack_uninstall}[args.cmd](conn, args)
 
 
 if __name__ == "__main__":

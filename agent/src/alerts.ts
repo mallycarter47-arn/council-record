@@ -9,12 +9,14 @@ const ROOT = process.env.COUNCIL_ROOT ?? path.resolve(process.cwd(), '..');
 const PYTHON = process.env.COUNCIL_PYTHON ?? path.join(ROOT, '.venv', 'bin', 'python');
 const ALERTS = path.join(ROOT, 'scripts', 'alerts.py');
 
-export function runAlerts(args: string[], timeout = 10_000): Promise<any> {
+// `env` adds variables for this one run — how the Slack install hands over its
+// bot token without putting it on the command line.
+export function runAlerts(args: string[], timeout = 10_000, env?: Record<string, string>): Promise<any> {
 	return new Promise((resolve, reject) => {
 		execFile(
 			PYTHON,
 			['-W', 'ignore', ALERTS, ...args],
-			{ cwd: ROOT, timeout, maxBuffer: 16 * 1024 * 1024 },
+			{ cwd: ROOT, timeout, maxBuffer: 16 * 1024 * 1024, env: env ? { ...process.env, ...env } : process.env },
 			(err, stdout, stderr) => {
 				if (err) {
 					const line = (stderr || err.message).trim().split('\n').pop();

@@ -11,14 +11,15 @@
 	},
 	"dependencies": {
 		"@discordjs/rest": "^2.6.3",
-		"@flue/discord": "^2.1.0",
-		"@flue/runtime": "^2.1.0",
+		"@flue/discord": "^2.2.2",
+		"@flue/runtime": "^2.2.2",
+		"@flue/slack": "^2.2.2",
 		"hono": "^4.12.32",
 		"valibot": "^1.5.0"
 	},
 	"devDependencies": {
-		"@flue/cli": "^2.1.0",
-		"@flue/vite": "^2.1.0",
+		"@flue/cli": "^2.2.2",
+		"@flue/vite": "^2.2.2",
 		"@types/node": "^22.10.10",
 		"typescript": "^7.0.2",
 		"vite": "^8.3.0"

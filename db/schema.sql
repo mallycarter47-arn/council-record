@@ -177,9 +177,12 @@ CREATE TABLE IF NOT EXISTS ingest_log (
 -- database, on its Fly volume, ever has rows here.
 -- ---------------------------------------------------------------------------
 
--- One saved search, posted to the Discord channel where /watch was run.
+-- One saved search, posted to the channel where it was set up: /watch in
+-- Discord, /civic watch in Slack. guild_id holds the Discord server or the
+-- Slack workspace (team) id. alerts.py adds `platform` to older databases.
 CREATE TABLE IF NOT EXISTS alert_subscriptions (
     id           INTEGER PRIMARY KEY,
+    platform     TEXT NOT NULL DEFAULT 'discord',   -- 'discord' | 'slack'
     guild_id     TEXT,
     channel_id   TEXT NOT NULL,
     user_id      TEXT,
@@ -198,6 +201,17 @@ CREATE TABLE IF NOT EXISTS alert_sent (
     alert_key       TEXT NOT NULL,
     sent_at         TEXT NOT NULL,
     PRIMARY KEY (subscription_id, alert_key)
+);
+
+-- Slack workspaces that installed the app. The bot token is what alerts.py
+-- posts with; it is deleted when the workspace uninstalls.
+CREATE TABLE IF NOT EXISTS slack_installs (
+    team_id      TEXT PRIMARY KEY,
+    team_name    TEXT,
+    bot_token    TEXT NOT NULL,
+    bot_user_id  TEXT,
+    installed_by TEXT,
+    installed_at TEXT NOT NULL
 );
 
 -- One row per daily run, so a restart doesn't run it twice.

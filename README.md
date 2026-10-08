@@ -66,7 +66,8 @@ variants live; the website and the bot both shell out to it.
 | `scripts/ingest_escribe.py` | eSCRIBE meetings and minutes (2022–present) |
 | `scripts/ingest_journals.py` | The Clerk's PDF journals (2017–2020) → items |
 | `scripts/search.py` | The search itself. `--json`, `--timeline`, filters |
-| `scripts/alerts.py` | Keyword alerts: `/watch` subscriptions, the daily eSCRIBE refresh, matching and posting |
+| `scripts/alerts.py` | Keyword alerts: `/watch` (Discord) and `/civic watch` (Slack) subscriptions, the daily eSCRIBE refresh, matching and posting |
+| `slack-app-manifest.yml` | Creates the Slack app; install link is `council-record-bot.fly.dev/slack/install` |
 | `scripts/fetch_upcoming.py` | Caches upcoming meetings so the site works offline |
 | `db/schema.sql` | One row per agenda item, plus the FTS5 index |
 | `web/` | Next.js UI |

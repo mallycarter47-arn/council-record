@@ -1,0 +1,41 @@
+# Paste into https://api.slack.com/apps → Create New App → From a manifest.
+# The URLs point at the bot on Fly (fly.toml); change them if that host moves.
+display_information:
+  name: Civic Memory
+  description: Alerts when a topic shows up on a Detroit City Council agenda.
+  long_description: >-
+    Civic Memory searches everything Detroit City Council has done since 2013,
+    across Legistar, the City Clerk's journals and eSCRIBE. Type
+    /civic watch water shutoff (or any topic) in a channel and Civic Memory
+    posts there each morning when it appears on a new or upcoming agenda, with
+    the date, committee, outcome and a link to the city's official record.
+    It reports the record; it does not judge it. Privacy:
+    https://civic-memory.fly.dev/privacy
+  background_color: "#1e4e79"
+features:
+  bot_user:
+    display_name: Civic Memory
+    always_online: true
+  slash_commands:
+    - command: /civic
+      url: https://council-record-bot.fly.dev/channels/slack/commands
+      description: Watch for a topic on Detroit City Council agendas
+      usage_hint: watch water shutoff · list · unwatch 3
+      should_escape: false
+oauth_config:
+  redirect_urls:
+    - https://council-record-bot.fly.dev/slack/oauth
+  scopes:
+    bot:
+      - commands
+      - chat:write
+      - chat:write.public
+settings:
+  event_subscriptions:
+    request_url: https://council-record-bot.fly.dev/channels/slack/events
+    bot_events:
+      - app_uninstalled
+      - tokens_revoked
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

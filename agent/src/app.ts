@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { startAlertSchedule } from './alerts.ts';
 import { channel as discord } from './channels/discord.ts';
+import { channel as slack, oauth as slackOAuth, slackEnabled } from './channels/slack.ts';
 
 const app = new Hono();
 
@@ -14,6 +15,13 @@ app.use('*', logger());
 // CouncilRecord is reached only through that channel's dispatch; `flue run`
 // still runs it directly from the terminal.
 app.route('/channels/discord', discord.route());
+// Slack (alerts only) mounts once its secrets are set; see channels/slack.ts.
+//   commands → /channels/slack/commands, events → /channels/slack/events
+//   "Add to Slack" → /slack/install
+if (slackEnabled) {
+	app.route('/channels/slack', slack.route());
+	app.route('/slack', slackOAuth);
+}
 app.get('/health', (c) => c.text('ok'));
 
 // The daily keyword-alert run (see alerts.ts). Off unless ALERTS_SCHEDULE=1,
