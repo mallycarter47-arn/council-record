@@ -1,19 +1,20 @@
 import { search } from "@/lib/record";
+import { logSearch } from "@/lib/stats";
 
 export async function GET(request: Request) {
   const p = new URL(request.url).searchParams;
   const q = p.get("q")?.trim();
   if (!q) return Response.json({ query: "", count: 0, results: [] });
+  const filters = {
+    body: p.get("body") || undefined,
+    since: p.get("since") || undefined,
+    until: p.get("until") || undefined,
+    action: p.get("action") || undefined,
+  };
   try {
-    return Response.json(
-      await search({
-        q,
-        body: p.get("body") || undefined,
-        since: p.get("since") || undefined,
-        until: p.get("until") || undefined,
-        action: p.get("action") || undefined,
-      }),
-    );
+    const result = await search({ q, ...filters });
+    logSearch(q, filters, result.count);
+    return Response.json(result);
   } catch (e) {
     return Response.json({ error: (e as Error).message }, { status: 400 });
   }

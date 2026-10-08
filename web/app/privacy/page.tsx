@@ -27,9 +27,10 @@ export default function Privacy() {
       <h2>On this website</h2>
       <ul>
         <li>
-          <strong>What you search for.</strong> Each search is written to the server log so we
-          can see what people look for and fix searches that come up empty. The log line has
-          the search words and nothing else of yours — no name, no cookie, no account.
+          <strong>What you search for.</strong> Each search is saved with its filters, the number
+          of results, and the time, so we can count how the site is used and fix searches that
+          come up empty. Nothing else of yours is saved with it — no name, no IP address, no
+          cookie, no account.
         </li>
         <li>
           <strong>Our host.</strong> The site runs on{" "}
