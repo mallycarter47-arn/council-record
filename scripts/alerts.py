@@ -289,6 +289,9 @@ def post(channel_id, content):
 def refresh():
     subprocess.run([sys.executable, os.path.join(HERE, "ingest_escribe.py"),
                     "--refresh", str(REFRESH_DAYS), "--quiet"], check=True)
+    # The /ask bot's next_meetings tool reads this cache. A failure here only
+    # leaves it stale, so it doesn't stop the alerts.
+    subprocess.run([sys.executable, os.path.join(HERE, "fetch_upcoming.py")])
 
 
 def run(conn, args):

@@ -12,8 +12,9 @@ primary_region = "ord"
   auto_start_machines = true
   min_machines_running = 1
 
-# Search counts for the private /stats page (web/lib/stats.ts). The council
-# database stays baked into the image; only stats.db lives here.
+# The site's live council database (seeded from the image and refreshed from
+# eSCRIBE by scripts/web-start.sh; COUNCIL_DB is set in Dockerfile.web) and
+# the search counts for the private /stats page (web/lib/stats.ts).
 [mounts]
   source = "civic_memory_stats"
   destination = "/data"

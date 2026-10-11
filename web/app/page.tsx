@@ -33,7 +33,7 @@ export default function Home() {
       <Explorer facets={f} />
       <p className="foot-note">
         Sources: Detroit Legistar (2013–2017), the City Clerk&rsquo;s Journals of Proceedings
-        (2017–2020), and eSCRIBE (2022–present) — all read from the city&rsquo;s own public
+        (2017–2021), and eSCRIBE (2022–present) — all read from the city&rsquo;s own public
         records. This tool reports the record; it does not judge it.{" "}
         <Link href="/privacy">Privacy</Link>
       </p>

@@ -10,7 +10,12 @@ import { DatabaseSync } from "node:sqlite";
 const ROOT = path.resolve(process.cwd(), "..");
 const PYTHON = process.env.COUNCIL_PYTHON ?? path.join(ROOT, ".venv", "bin", "python");
 const SEARCH = path.join(ROOT, "scripts", "search.py");
-const DB = path.join(ROOT, "db", "council_record.db");
+// On Fly the site reads its own live copy, refreshed by scripts/web-start.sh.
+const DB = process.env.COUNCIL_DB ?? path.join(ROOT, "db", "council_record.db");
+
+// Cached meeting times are Detroit wall-clock times; the server runs on UTC.
+const detroitNow = () =>
+  new Date().toLocaleString("sv-SE", { timeZone: "America/Detroit" }).replace(" ", "T");
 
 export type Result = {
   item_id: number;
@@ -90,7 +95,7 @@ export function nextMeetings(limit = 2): Meeting[] {
         "SELECT body_name, starts_at, location, url FROM upcoming_meetings" +
           " WHERE starts_at >= ? ORDER BY starts_at LIMIT ?",
       )
-      .all(new Date().toISOString().slice(0, 19), limit) as Meeting[];
+      .all(detroitNow(), limit) as Meeting[];
   } catch {
     return [];
   } finally {

@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   try {
     return Response.json(await timeline(q));
   } catch (e) {
-    return Response.json({ error: (e as Error).message }, { status: 400 });
+    console.error("[timeline]", (e as Error).message);
+    return Response.json({ error: "Couldn't run that search" }, { status: 400 });
   }
 }

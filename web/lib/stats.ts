@@ -3,7 +3,7 @@
 // that identifies the person (see /privacy).
 //
 // On Fly this lives on the civic_memory_stats volume (STATS_DB=/data/stats.db),
-// separate from the read-only council database baked into the image. Logging
+// next to the site's live council database but in its own file. Logging
 // must never break a search, so every write swallows its own errors.
 
 import { mkdirSync } from "node:fs";

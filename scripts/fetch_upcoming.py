@@ -4,21 +4,28 @@ Cache the next few weeks of council meetings from eSCRIBE, so the site can
 tell people when they can actually show up — with the network off.
 
     python scripts/fetch_upcoming.py
+
+COUNCIL_DB overrides the database path. On Fly, the site's and the bot's
+daily refreshes run this against their live copies.
 """
 
 import os
 import sqlite3
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import requests
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
-DB_PATH = os.path.join(ROOT, "db", "council_record.db")
+DB_PATH = os.environ.get("COUNCIL_DB") or os.path.join(ROOT, "db", "council_record.db")
 SCHEMA_PATH = os.path.join(ROOT, "db", "schema.sql")
 BASE = "https://pub-detroitmi.escribemeetings.com"
 
-today = date.today()
+# eSCRIBE times are Detroit wall-clock times; compare them to Detroit's clock,
+# not the server's (UTC on Fly).
+now = datetime.now(ZoneInfo("America/Detroit")).replace(tzinfo=None)
+today = now.date()
 resp = requests.post(
     f"{BASE}/MeetingsCalendarView.aspx/GetCalendarMeetings",
     json={"calendarStartDate": today.isoformat(),
@@ -33,7 +40,6 @@ conn = sqlite3.connect(DB_PATH)
 with open(SCHEMA_PATH, encoding="utf-8") as fh:
     conn.executescript(fh.read())
 
-now = datetime.now()
 rows = []
 for m in meetings:
     starts = datetime.strptime(m["StartDate"], "%Y/%m/%d %H:%M:%S")

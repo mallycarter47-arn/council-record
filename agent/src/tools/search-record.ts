@@ -82,7 +82,10 @@ export const nextMeetings = defineTool({
 					'SELECT body_name, starts_at, location, url FROM upcoming_meetings' +
 						' WHERE starts_at >= ? ORDER BY starts_at LIMIT ?',
 				)
-				.all(new Date().toISOString().slice(0, 19), data.limit ?? 3) as {
+				.all(
+					new Date().toLocaleString('sv-SE', { timeZone: 'America/Detroit' }).replace(' ', 'T'),
+					data.limit ?? 3,
+				) as {
 				body_name: string;
 				starts_at: string;
 				location: string | null;
@@ -117,7 +120,7 @@ const year = v.optional(v.pipe(v.string(), v.regex(/^\d{4}(-\d{2}-\d{2})?$/)));
 export const searchRecord = defineTool({
 	name: 'search_record',
 	description:
-		'Keyword search over Detroit City Council agenda items (May 2013 – Mar 2017 and 2022 – present). ' +
+		'Keyword search over Detroit City Council agenda items, May 2013 to the present. ' +
 		'Returns the best-matching items, each with date, body, title, outcome and a link to the official record. ' +
 		'Use plain keywords that would appear in legislation ("water shut off", "Land Bank", "demolition contract"), not a question. ' +
 		'Put an exact phrase in double quotes. Uppercase OR widens a search: water OR sewer.',

@@ -237,7 +237,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
                 </button>
               )}
             </div>
-            {error && <p className="error">Search failed: {error}. Remove any unmatched quote marks and try again.</p>}
+            {error && <p className="error">Couldn&rsquo;t run that search. Remove any unmatched quote marks and try again.</p>}
             {!error && results?.length === 0 && (
               <p className="empty">
                 Nothing in the record matches that. Try fewer words, a different spelling, or an exact phrase in &ldquo;quotes&rdquo;.

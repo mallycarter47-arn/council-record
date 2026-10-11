@@ -16,6 +16,8 @@ export async function GET(request: Request) {
     logSearch(q, filters, result.count);
     return Response.json(result);
   } catch (e) {
-    return Response.json({ error: (e as Error).message }, { status: 400 });
+    // The real reason goes to the logs; people get one plain sentence.
+    console.error("[search]", (e as Error).message);
+    return Response.json({ error: "Couldn't run that search" }, { status: 400 });
   }
 }
