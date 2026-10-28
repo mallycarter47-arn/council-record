@@ -28,6 +28,7 @@ import sqlite3
 import subprocess
 import sys
 from datetime import date, datetime, timedelta, timezone
+from urllib.parse import quote_plus
 from zoneinfo import ZoneInfo
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -79,6 +80,18 @@ def item_match(raw_query):
     return f"{ITEM_COLUMNS} : ({q})" if q else None
 
 
+def tenant(args):
+    """Extra WHERE terms that pin a subscription to the workspace asking.
+
+    A Slack Connect channel keeps one channel id across every workspace that
+    shares it, so for Slack the channel alone doesn't say whose watch it is.
+    Discord channel ids are unique, so Discord passes nothing and keeps the
+    channel-only behaviour."""
+    if getattr(args, "platform", None) == "slack":
+        return " AND platform = 'slack' AND guild_id = ?", (args.guild,)
+    return "", ()
+
+
 def add(conn, args):
     q = item_match(args.query)
     if not q:
@@ -90,14 +103,16 @@ def add(conn, args):
         return out({"ok": False, "error": "I couldn't read that search. Try plain words."})
 
     query = args.query.strip()
+    scope, scope_args = tenant(args)
     existing = conn.execute(
         "SELECT id FROM alert_subscriptions WHERE channel_id = ? AND active = 1"
-        " AND lower(query) = lower(?)", (args.channel, query)).fetchone()
+        " AND lower(query) = lower(?)" + scope, (args.channel, query, *scope_args)).fetchone()
     if existing:
         return out({"ok": True, "id": existing[0], "query": query, "duplicate": True,
                     "past_matches": total})
     count = conn.execute("SELECT COUNT(*) FROM alert_subscriptions"
-                         " WHERE channel_id = ? AND active = 1", (args.channel,)).fetchone()[0]
+                         " WHERE channel_id = ? AND active = 1" + scope,
+                         (args.channel, *scope_args)).fetchone()[0]
     if count >= MAX_PER_CHANNEL:
         return out({"ok": False, "error": f"This channel already watches {count} searches. "
                     "Remove one first."})
@@ -112,17 +127,20 @@ def add(conn, args):
 
 
 def list_subs(conn, args):
+    scope, scope_args = tenant(args)
     rows = conn.execute(
         "SELECT id, query, created_at FROM alert_subscriptions"
-        " WHERE channel_id = ? AND active = 1 ORDER BY id", (args.channel,)).fetchall()
+        " WHERE channel_id = ? AND active = 1" + scope + " ORDER BY id",
+        (args.channel, *scope_args)).fetchall()
     out({"ok": True, "subscriptions": [{"id": r[0], "query": r[1], "created_at": r[2]}
                                        for r in rows]})
 
 
 def remove(conn, args):
+    scope, scope_args = tenant(args)
     cur = conn.execute("UPDATE alert_subscriptions SET active = 0"
-                       " WHERE id = ? AND channel_id = ? AND active = 1",
-                       (args.id, args.channel))
+                       " WHERE id = ? AND channel_id = ? AND active = 1" + scope,
+                       (args.id, args.channel, *scope_args))
     conn.commit()
     if not cur.rowcount:
         return out({"ok": False, "error": f"No watch #{args.id} in this channel. "
@@ -213,8 +231,12 @@ def format_alert(query, items, today, platform="discord"):
     esc = slack_escape if slack else (lambda t: t)
     bold = (lambda t: f"*{t}*") if slack else (lambda t: f"**{t}**")
     ital = (lambda t: f"_{t}_") if slack else (lambda t: f"*{t}*")
-    link = (lambda url, label: f"<{url}|{label}>") if slack else (lambda url, label: f"[{label}](<{url}>)")
-    search_url = f"https://civic-memory.fly.dev/?q={query.replace(' ', '+')}"
+    # Slack reads <, > and | inside a link as markup, so a raw URL could close
+    # the link early and add its own (a <!channel> ping, say). Escape it, and
+    # percent-encode the query rather than only swapping spaces.
+    link = ((lambda url, label: f"<{slack_escape(url).replace('|', '%7C')}|{label}>") if slack
+            else (lambda url, label: f"[{label}](<{url}>)"))
+    search_url = f"https://civic-memory.fly.dev/?q={quote_plus(query)}"
 
     lines = [f"🔔 {bold('New on the agenda:')} `{esc(query)}`"]
     shown = items[:MAX_ITEMS_PER_ALERT]
@@ -359,8 +381,12 @@ def main():
     a.add_argument("--query", required=True)
     l = sub.add_parser("list")
     l.add_argument("--channel", required=True)
+    l.add_argument("--platform", choices=["discord", "slack"], default="discord")
+    l.add_argument("--guild")
     r = sub.add_parser("remove")
     r.add_argument("--channel", required=True)
+    r.add_argument("--platform", choices=["discord", "slack"], default="discord")
+    r.add_argument("--guild")
     r.add_argument("--id", type=int, required=True)
     n = sub.add_parser("run")
     n.add_argument("--force", action="store_true", help="ignore the time and once-a-day checks")

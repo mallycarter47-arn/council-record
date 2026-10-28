@@ -66,6 +66,11 @@ export const channel = createDiscordChannel({
 		if (typeof question !== 'string' || !question.trim()) {
 			return reply('Add a question, like `/ask what did council do about water shutoffs?`', true);
 		}
+		// The answer is posted with the bot's own token, so without this a member
+		// could use /ask to post in a channel they can't post in themselves.
+		if (!canSendHere(interaction)) {
+			return reply("You can't post in this channel, so I won't answer here. Try a channel you can post in.", true);
+		}
 
 		const channelName = interaction.channel?.name ?? undefined;
 		await dispatch(CouncilRecord, {
@@ -85,6 +90,23 @@ export const channel = createDiscordChannel({
 		return reply(`> ${question.slice(0, 300)}\nSearching the council record…`);
 	},
 });
+
+const ADMINISTRATOR = 1n << 3n;
+const SEND_MESSAGES = 1n << 11n;
+const SEND_MESSAGES_IN_THREADS = 1n << 38n;
+const THREAD_TYPES = new Set([10, 11, 12]);
+
+// In a server, Discord sends the member's permissions for this channel
+// (overwrites included) with every interaction. DMs have no member and are fine.
+function canSendHere(interaction: APIInteraction): boolean {
+	const raw = interaction.member?.permissions;
+	if (!interaction.guild_id) return true;
+	if (!raw) return false;
+	const perms = BigInt(raw);
+	if (perms & ADMINISTRATOR) return true;
+	const inThread = THREAD_TYPES.has(interaction.channel?.type ?? -1);
+	return (perms & (inThread ? SEND_MESSAGES_IN_THREADS : SEND_MESSAGES)) !== 0n;
+}
 
 function option(interaction: APIInteraction, optionName: string): string | number | undefined {
 	if (interaction.type !== 2 || interaction.data.type !== 1) return undefined;

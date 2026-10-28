@@ -70,13 +70,16 @@ async function command(p: SlackSlashCommandPayload) {
 			case 'unwatch': {
 				const id = Number(arg.replace('#', ''));
 				if (!Number.isInteger(id) || id < 1) return say('Which one? `/civic list` shows the numbers.');
-				const r = await runAlerts(['remove', '--channel', p.channel_id, '--id', String(id)]);
+				const r = await runAlerts([
+					'remove', '--platform', 'slack', '--guild', p.team_id,
+					'--channel', p.channel_id, '--id', String(id),
+				]);
 				if (!r.ok) return say(r.error);
 				return say(`Stopped watching *${esc(r.query)}* (#${r.id}) in this channel.`, true);
 			}
 			case 'list':
 			case 'watching': {
-				const r = await runAlerts(['list', '--channel', p.channel_id]);
+				const r = await runAlerts(['list', '--platform', 'slack', '--guild', p.team_id, '--channel', p.channel_id]);
 				const subs = r.subscriptions as { id: number; query: string }[];
 				if (!subs.length) return say('Nothing watched here yet. Try `/civic watch water shutoff`.');
 				return say(
